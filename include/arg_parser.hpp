@@ -217,6 +217,7 @@ public:
         /*@{*/
         ARG_BOOL, ///< Boolean option
         ARG_INT,  ///< Integer option
+        ARG_HEX,  ///< Hexadecimal format option
         ARG_FLT,  ///< Float option
         ARG_STR,  ///< String option
         /*@}*/
@@ -341,11 +342,19 @@ public:
         if (val != this->options.end() && val->second.is_set) {
             ss << val->second.value;
             T opt_val;
-            if (val->second.type == ARG_BOOL) {
-                opt_val = val->second.is_set;
-            } else {
-                if (!(ss >> opt_val))
-                    throw std::logic_error("Cannot convert option to given type. (" + ss.str() +")");
+            switch (val->second.type) {
+                case ARG_BOOL:
+                    opt_val = val->second.is_set;
+                    break;
+                case ARG_HEX:
+                        ss << std::hex;
+                        ss >> opt_val;
+                    break;
+                default:
+                    if (!(ss >> opt_val)) {
+                        throw std::logic_error("Cannot convert option to given type. (" + ss.str() +")");
+                    }
+                    break;
             }
             return opt_val;
         }
