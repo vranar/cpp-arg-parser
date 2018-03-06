@@ -10,6 +10,28 @@
 #include <map>
 #include <vector>
 #include <sstream>
+#include <unordered_map>
+#include <set>
+
+/**
+ * @brief Argument type enumerator
+ */
+enum class ArgumentType {
+    /*@{*/
+    BOOL, ///< Boolean option
+    INT,  ///< Integer option
+    HEX,  ///< Hexadecimal format option
+    FLT,  ///< Float option
+    STR,  ///< String option
+    /*@}*/
+};
+
+enum class ArgumentOption {
+    REQUIRED,
+    OPTIONAL,
+    INHERIT_GROUP
+};
+
 
 /**
  * @brief Search key for loaded options
@@ -19,43 +41,43 @@ struct arg_key
     std::string shr; ///< short option
     std::string lng; ///< long option
 
-    
+
     /**
      * @brief Default constructor
      */
     arg_key() : shr(), lng() { }
-    
+
     /**
      * @brief Constructor of the option key
      *
      * @param s short option name
      * @param l long option name
      */
-    arg_key(const std::string& s, const std::string& l) : shr(s), lng(l) { }
+    arg_key(std::string s, std::string l) : shr(std::move(s)), lng(std::move(l)) { }
 
     /**
      * @brief Copy-constructor of the option key
      *
      * @param other Input structure
      */
-    arg_key(const arg_key& other) : shr(other.shr), lng(other.lng) { }
-
-    bool empty() const { return shr.empty() && lng.empty(); }
+    arg_key(const arg_key& other) = default;
 
     /**
-     * @brief Copy-assignment operator of the option key 
+     * @brief Copy-assignment operator of the option key
      *
      * @param other Input structure
      */
-    inline arg_key& operator= (const arg_key& other) {
-        this->shr = other.shr;
-        this->lng = other.lng;
+    arg_key& operator=(const arg_key& other) = default;
 
-        return *this;
-    }
+    arg_key(arg_key&& other) = default;
+
+    arg_key& operator=(arg_key&& other) = default;
+
+    bool empty() const { return shr.empty() && lng.empty(); }
+
 
     /**
-     * @brief Less-than operator for option key for std::map 
+     * @brief Less-than operator for option key for std::map
      *
      * @param other RH-side structure.
      *
@@ -63,9 +85,9 @@ struct arg_key
      *         while short names are the same, false otherwise.
      */
     inline bool operator< (const arg_key& other) const {
-        if (this->shr < other.shr)
+        if (shr < other.shr)
             return true;
-        else if(this->shr == other.shr && this->lng < other.lng)
+        else if(shr == other.shr && lng < other.lng)
             return true;
         return false;
     }
@@ -78,7 +100,7 @@ struct arg_key
      * @return true if both short and long names are the same.
      */
     inline bool operator== (const arg_key& other) const {
-        return this->shr == other.shr && this->lng == other.lng;
+        return shr == other.shr && lng == other.lng;
     }
 
     inline bool operator != (const arg_key& other) const {
@@ -90,11 +112,11 @@ struct arg_key
  * @brief Option data structure.
  */
 struct arg_opt {
-    std::string value; ///< option value
-    int type;          ///< option type (ARG_{BOOL,INT,FLOAT,STR}
-    bool is_set;       ///< flag if option is set
-    bool has_default;  ///< flag if option has default value
-    std::string desc;  ///< description for the option used in help text
+    std::string value;                 ///< option value
+    ArgumentType type;                 ///< option type (see ArgumentType)
+    bool is_set;                       ///< flag if option is set
+    bool has_default;                  ///< flag if option has default value
+    std::string desc;                  ///< description for the option used in help text
 
     /**
      * @brief Defualt constructor of the option data
@@ -108,45 +130,31 @@ struct arg_opt {
      * @param t option type
      * @param d option description
      */
-    arg_opt(const std::string& v, int t, const std::string& d, bool def = false)
-        : value(v), type(t), is_set(false), has_default(def), desc(d)
-    { 
-        if (has_default) {
-            is_set = true;
-        }
-    }
+     arg_opt(std::string v, ArgumentType t, std::string d, bool def = false)
+            : value(std::move(v)),
+              type(t),
+              is_set(def),
+              has_default(def),
+              desc(std::move(d))
+    { }
 
     /**
      * @brief Copy-constructor of the option data structure
      *
      * @param other Input structure
      */
-    arg_opt(const arg_opt& other)
-        : value(other.value),
-          type(other.type),
-          is_set(other.is_set),
-          has_default(other.has_default),
-          desc(other.desc)
-    { }
+    arg_opt(const arg_opt& other) = default;
 
     /**
      * @brief Copy-assignment operator for the option data structure
      *
      * @param other Input structure
      */
-    inline arg_opt& operator= (const arg_opt& other) {
-        this->value = other.value;
-        this->type = other.type;
-        this->is_set = other.is_set;
-        this->has_default = other.has_default;
-        this->desc = other.desc;
-
-        return *this;
-    }
+    inline arg_opt& operator= (const arg_opt& other) = default;
 };
 
 /**
-* @brief Positional argument data 
+* @brief Positional argument data
 */
 struct arg_pos {
     std::string value; ///< argument value
@@ -163,31 +171,41 @@ struct arg_pos {
      * @param v Argument value
      * @param n Optional argument name
      */
-    arg_pos(const std::string& v, const std::string& n="") : value(v), name(n) {}
+    explicit arg_pos(std::string v, std::string n="") : value(std::move(v)), name(std::move(n)) {}
 
     /**
-     * @brief Copy-constructor of positional argument structure 
+     * @brief Copy-constructor of positional argument structure
      *
      * @param other Input structure
      */
-    arg_pos(const arg_pos& other) : value(other.value), name(other.name) {}
+    arg_pos(const arg_pos& other)= default;
 
     /**
      * @brief Copy-assignment operator for positional argument structure.
      *
      * @param other Input structure.
      */
-    inline arg_pos& operator= (const arg_pos& other) {
-        this->value = other.value;
-        this->name = other.name;
-
-        return *this;
-    }
+    inline arg_pos& operator= (const arg_pos& other) = default;
 };
 
 struct arg_default : std::pair<bool, std::string> {
     arg_default() : std::pair<bool,std::string>(false, "") {}
     explicit arg_default(const std::string& v) : std::pair<bool,std::string>(true, v) {}
+};
+
+struct arg_group : std::set<arg_key>
+{
+protected:
+    bool mandatory_;
+
+public:
+    explicit arg_group(bool m = false) : std::set<arg_key>(), mandatory_(m) {}
+
+    bool mandatory() { return mandatory_; }
+
+    void make_mandatory() {
+        mandatory_ = true;
+    }
 };
 
 /**
@@ -196,32 +214,60 @@ struct arg_default : std::pair<bool, std::string> {
 class ArgumentParser
 {
 protected:
-    typedef std::map<arg_key, arg_opt> options_t;
+    using options_t = std::map<arg_key, arg_opt>;
+    const unsigned int OPT_WIDTH_;       ///< option name field width
 
-    const unsigned int OPT_WIDTH;       ///< option name field width
+    std::string exec_name_;                                 ///< executable name
+    std::vector<arg_pos> positional_;                       ///< positional arguments
+    options_t options_;                                     ///< options
+    std::set<arg_key> mandatory_;                           ///< mandatory options
+    std::unordered_map<std::string, arg_group> mtx_groups_; ///< Mutually exclusive groups
 
-    std::string exec_name;              ///< executable name
-    std::vector<arg_pos> positional;    ///< positional arguments
-    options_t options;                  ///< options
-    std::vector<arg_key> mandatory;     ///< mandatory options
+    std::string prog_desc_;              ///< program description
+    std::string usage_;                  ///< program usage
 
-    std::string prog_desc;              ///< program description
-    std::string usage;                  ///< program usage
-    int req_positional;                 ///< requiered positional arguments count
+    bool option_is_mutually_exclusive_(const arg_key& ak)
+    {
+        return std::any_of(mtx_groups_.begin(),
+                           mtx_groups_.end(),
+                           [&ak](auto& group)
+                           {
+                               return group.second.find(ak) == group.second.end();
+                           }
+        );
+    }
+
+    void make_option_mandatory_(const arg_key& ak)
+    {
+        mandatory_.emplace(ak);
+    }
+
+    decltype(auto) check_mandatory_options_();
+    decltype(auto) check_mandatory_option_groups_();
+    decltype(auto) check_option_conflicts_();
+
+    const options_t::iterator find_option_(const std::string& key) {
+        return std::find_if(options_.begin(),
+                            options_.end(),
+                            [&key](const std::pair<arg_key, arg_opt>& a) -> bool
+                            {
+                                return a.first.shr == key || a.first.lng == key;
+                            }
+        );
+    }
+
+    const options_t::iterator find_option_(const arg_key& ak) {
+
+        auto&& opt = find_option_(ak.shr);
+
+        if (opt == options_.end()) {
+            find_option_(ak.lng);
+        }
+
+        return opt;
+    }
 
 public:
-    /**
-     * @brief Argument type enumerator
-     */
-    enum {
-        /*@{*/
-        ARG_BOOL, ///< Boolean option
-        ARG_INT,  ///< Integer option
-        ARG_HEX,  ///< Hexadecimal format option
-        ARG_FLT,  ///< Float option
-        ARG_STR,  ///< String option
-        /*@}*/
-    };
 
     /**
      * @brief Constructor of the ArgumentParser 
@@ -229,7 +275,7 @@ public:
      * @param desc program description
      * @param usage program usage
      */
-    ArgumentParser(const std::string& desc = "", const std::string& usage = "");
+    explicit ArgumentParser(const std::string& desc = "", const std::string& usage = "");
 
     /**
      * @brief Method for registering option to ArgumentParser. 
@@ -242,11 +288,13 @@ public:
      *
      * @return true if option was successfully registered in ArgumentParser
      */
-     bool register_option(const arg_key& ak,
-                          bool required,
-                          int type,
-                          std::string desc,
-                          const arg_default& default_value = arg_default());
+
+    bool register_option(const arg_key& ak,
+                         ArgumentOption opt,
+                         ArgumentType type,
+                         const std::string& desc,
+                         const std::string& excl_group = "",
+                         const arg_default& default_value = arg_default());
 
     /**
      * @brief Method for registering positional arguments. 
@@ -257,6 +305,19 @@ public:
     void register_positional(unsigned count,
                              std::vector<std::string> names=std::vector<std::string>());
 
+    bool add_mutually_exclusive_group(const std::string& grp_name, bool required = false) {
+        return mtx_groups_.emplace(grp_name, arg_group(required)).second;
+    }
+
+    bool insert_into_group(const std::string& grp_name, const arg_key& ak) {
+        if (mtx_groups_.count(grp_name)) {
+            mtx_groups_.at(grp_name).emplace(ak).second;
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * @brief Method for loading CLI arguments. 
      *
@@ -265,20 +326,14 @@ public:
      */
     void load_arguments(int argc, char **argv);
 
-    const options_t::iterator find_option(const std::string& key) {
-        return std::find_if(this->options.begin(), this->options.end(),
-                            [&key](const std::pair<arg_key, arg_opt>& a)
-                            { return a.first.shr == key || a.first.lng == key; });
+    template<typename T> bool has_option(const T& key) {
+        return find_option_(key) != options_.end();
     }
 
-    bool has_option(const std::string& key) {
-        return this->find_option(key) != this->options.end();
-    }
+    template<typename T> bool option_is_set(const T& key) {
+        const auto opt = find_option_(key);
 
-    bool option_is_set(const std::string& key) {
-        const auto opt = this->find_option(key);
-
-        return opt != this->options.end() && opt->second.is_set;
+        return has_option(key) && opt->second.is_set;
     }
 
     /**
@@ -294,10 +349,14 @@ public:
      */
     const std::string operator[] (const std::string& key) const
     {
-        auto opt = std::find_if(this->options.begin(), this->options.end(),
-                                [&key](const std::pair<arg_key, arg_opt>& a)
-                                { return a.first.shr == key || a.first.lng == key; });
-        if (opt != this->options.end()) {
+        auto opt = std::find_if(options_.begin(),
+                                options_.end(),
+                                [&key](const std::pair<arg_key, arg_opt>& a) -> bool
+                                {
+                                    return a.first.shr == key || a.first.lng == key;
+                                }
+        );
+        if (opt != options_.end()) {
             return opt->second.value;
         }
 
@@ -315,9 +374,9 @@ public:
      *
      * @return Value of positional parameter.
      */
-    const std::string& operator[] (int idx) const
+    const std::string& operator[] (size_t idx) const
     {
-        return this->positional[idx].value;
+        return positional_.at(idx).value;
     }
 
     /**
@@ -330,23 +389,26 @@ public:
      *
      * @return option value
      */
-    template<typename T> T parse_option(const std::string& opt)
+    template<typename T> decltype(auto) parse_option(const std::string& opt)
     {
-        auto&& val = std::find_if(this->options.begin(),
-                                  this->options.end(),
+        auto&& val = std::find_if(this->options_.begin(),
+                                  this->options_.end(),
                                   [opt](const std::pair<arg_key, arg_opt>& a)
-                                  { return a.first.shr == opt || a.first.lng == opt; });
+                                  {
+                                      return a.first.shr == opt || a.first.lng == opt;
+                                  }
+        );
 
         std::stringstream ss;
 
-        if (val != this->options.end() && val->second.is_set) {
+        if (val != options_.end() && val->second.is_set) {
             ss << val->second.value;
             T opt_val;
             switch (val->second.type) {
-                case ARG_BOOL:
+                case ArgumentType::BOOL:
                     opt_val = val->second.is_set;
                     break;
-                case ARG_HEX:
+                case ArgumentType::HEX:
                         ss << std::hex;
                         ss >> opt_val;
                     break;
@@ -354,7 +416,6 @@ public:
                     if (!(ss >> opt_val)) {
                         throw std::logic_error("Cannot convert option to given type. (" + ss.str() +")");
                     }
-                    break;
             }
             return opt_val;
         }
@@ -371,19 +432,20 @@ public:
      *
      * @return argument value
      */
-    template<typename T> T parse_positional(int idx)
+    template<typename T> decltype(auto) parse_positional(int idx)
     {
         std::stringstream ss;
 
-        if (idx > static_cast<int>((this->positional.size() - 1)) ||  idx < 0) {
+        if (idx > static_cast<int>((this->positional_.size() - 1)) ||  idx < 0) {
             throw std::logic_error("Positional argument index out of range.");
         }
 
-        ss << this->positional[idx].value;
+        ss << positional_[idx].value;
 
         T opt_val;
-        if (!(ss >> opt_val))
-            throw std::logic_error("Cannot convert positional "+ std::to_string(idx) +" to given type. (" + ss.str() +")");
+        if (!(ss >> opt_val)) {
+            throw std::logic_error("Cannot convert positional " + std::to_string(idx) + " to given type. (" + ss.str() + ")");
+        }
 
         return opt_val;
     }
@@ -394,9 +456,15 @@ public:
     void print_help_text();
 
     /**
+     * @brief Method for printing usage text.
+     */
+    void print_usage_text();
+
+    /**
      * @brief Method for setting usage text. 
      *
      * @param txt new usage text
      */
-    void set_usage_text(const std::string& txt) { this->usage = txt; }
+    void set_usage_text(const std::string& txt) { this->usage_ = txt; }
 };
+
