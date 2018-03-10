@@ -7,12 +7,15 @@ set(CMAKE_BUILD_TYPE Release)
 
 include_directories(include)
 
-set(SRCS src/arg_parser.cpp include/arg_parser.hpp)
+set(HEADERS include/arg_parser.hpp)
+set(SRCS src/arg_parser.cpp ${HEADERS})
 
 set(UTEST_OUTPUT_DIR ${CMAKE_BINARY_DIR}/unit-tests)
 
 add_library(cppargparser_shared SHARED ${SRCS})
+set_target_properties(cppargparser_shared PROPERTIES OUTPUT_NAME "cppargparser")
 add_library(cppargparser_static STATIC ${SRCS})
+set_target_properties(cppargparser_static PROPERTIES OUTPUT_NAME "cppargparser")
 
 link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
@@ -50,3 +53,6 @@ add_test("MutualExclusion" ${UTEST_OUTPUT_DIR}/test-mtx-options -a)
 add_test("MutualExclusion2Groups" ${UTEST_OUTPUT_DIR}/test-mtx-options -a -b)
 add_test("MutualExclusionConflict" ${UTEST_OUTPUT_DIR}/test-mtx-options -a -b -c)
 set_tests_properties("MutualExclusionConflict" PROPERTIES WILL_FAIL true)
+
+install(TARGETS cppargparser_shared cppargparser_static LIBRARY DESTINATION lib INCLUDES DESTINATION include/cppargparser ARCHIVE DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/cppargparser)
