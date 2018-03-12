@@ -3,8 +3,14 @@ project('cppargparser', 'cpp')
 src_path = files('src/arg_parser.cpp')
 hdr_path = include_directories('include')
 
-lib_so = shared_library('cppargparser', sources : src_path, include_directories : hdr_path)
-lib_stat = static_library('cppargparser', sources : src_path, include_directories : hdr_path)
+lib_so = shared_library('cppargparser', sources : src_path,
+                        include_directories : hdr_path,
+                        install : true)
+lib_stat = static_library('cppargparser', sources : src_path,
+                          include_directories : hdr_path,
+                          install : true)
+
+install_headers('include/arg_parser.hpp', subdir : 'cppargparser')
 
 tests = [
     executable('test-option-register',
