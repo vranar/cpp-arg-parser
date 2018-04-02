@@ -1,12 +1,12 @@
-project('cppargparser', 'cpp')
+project('cppargparser', 'cpp', default_options : ['cpp_std=c++14'])
 
 src_path = files('src/arg_parser.cpp')
 hdr_path = include_directories('include')
 
-lib_so = shared_library('cppargparser', sources : src_path,
+lib_so = shared_library('argparser', sources : src_path,
                         include_directories : hdr_path,
                         install : true)
-lib_stat = static_library('cppargparser', sources : src_path,
+lib_stat = static_library('argparser', sources : src_path,
                           include_directories : hdr_path,
                           install : true)
 

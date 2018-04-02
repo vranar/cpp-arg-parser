@@ -13,9 +13,9 @@ set(SRCS src/arg_parser.cpp ${HEADERS})
 set(UTEST_OUTPUT_DIR ${CMAKE_BINARY_DIR}/unit-tests)
 
 add_library(cppargparser_shared SHARED ${SRCS})
-set_target_properties(cppargparser_shared PROPERTIES OUTPUT_NAME "cppargparser")
+set_target_properties(cppargparser_shared PROPERTIES OUTPUT_NAME "argparser")
 add_library(cppargparser_static STATIC ${SRCS})
-set_target_properties(cppargparser_static PROPERTIES OUTPUT_NAME "cppargparser")
+set_target_properties(cppargparser_static PROPERTIES OUTPUT_NAME "argparser")
 
 link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
