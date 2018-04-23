@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(cpp_arg_parser)
+include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
@@ -13,7 +14,7 @@ set(SRCS src/arg_parser.cpp ${HEADERS})
 set(UTEST_OUTPUT_DIR ${CMAKE_BINARY_DIR}/unit-tests)
 
 add_library(cppargparser ${SRCS})
-set_target_properties(cppargparser PROPERTIES OUTPUT_NAME "argparser")
+set_target_properties(cppargparser PROPERTIES OUTPUT_NAME "cppargparser")
 
 link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
@@ -52,5 +53,11 @@ add_test("MutualExclusion2Groups" ${UTEST_OUTPUT_DIR}/test-mtx-options -a -b)
 add_test("MutualExclusionConflict" ${UTEST_OUTPUT_DIR}/test-mtx-options -a -b -c)
 set_tests_properties("MutualExclusionConflict" PROPERTIES WILL_FAIL true)
 
-install(TARGETS cppargparser LIBRARY DESTINATION lib INCLUDES DESTINATION include/cppargparser ARCHIVE DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/cppargparser)
+install(TARGETS cppargparser
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${HEADERS} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/cppargparser")
+install(TARGETS cppargparser EXPORT cppargparser-targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(EXPORT cppargparser-targets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cppargparser)
+install(FILES cmake-scripts/cppargparser-config.cmake DESTINATION "${CMAKE_INSTALL_LIBDIR}/cppargparser")
+
