@@ -232,7 +232,7 @@ protected:
                            mtx_groups_.end(),
                            [&ak](auto& group)
                            {
-                               return group.second.find(ak) == group.second.end();
+                               return group.second.find(ak) != group.second.end();
                            }
         );
     }
