@@ -13,6 +13,10 @@ The ArgumentParser will process the arguments and store them for the duration of
 check if some options cannot be used together if they belong to the same groups. The library will also report
 if some options are missing.
 
+# Requirements
+* Compiler with C++14 support
+* CMake or meson
+
 # Basic usage example
 
 ```cpp
