@@ -5,6 +5,8 @@
  * @date 2016-09-07
  */
 
+#pragma once
+
 #include <algorithm>
 #include <string>
 #include <map>
