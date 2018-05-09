@@ -280,6 +280,16 @@ public:
     explicit ArgumentParser(const std::string& desc = "", const std::string& usage = "");
 
     /**
+     * @brief Getter for executable name.
+     *
+     * @return Name of the current binary executable.
+     */
+    auto exec_name()
+    {
+        return exec_name_;
+    }
+
+    /**
      * @brief Method for registering option to ArgumentParser. 
      *
      * @param short_opt short option name
