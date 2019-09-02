@@ -61,3 +61,9 @@ install(TARGETS cppargparser EXPORT cppargparser-targets DESTINATION ${CMAKE_INS
 install(EXPORT cppargparser-targets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cppargparser)
 install(FILES cmake-scripts/cppargparser-config.cmake DESTINATION "${CMAKE_INSTALL_LIBDIR}/cppargparser")
 
+SET(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}-dev")
+SET(CPACK_GENERATOR "DEB")
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Roman Vrana <ivrana@fit.vutbr.cz>")
+SET(CPACK_DEBIAN_PACKAGE_DEPENDS "")
+INCLUDE(CPack)
+
