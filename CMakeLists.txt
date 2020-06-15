@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(cpp_arg_parser)
+project(cpp-arg-parser)
 include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 14)
